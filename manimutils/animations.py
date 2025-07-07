@@ -1,4 +1,5 @@
 from manim import *
+from manimutils.mobjects import *
 
 # TODO there has to be a better way to do this...
 class IndicationTransform(Transform):
@@ -74,3 +75,50 @@ class TransformMatchingTexInOrder(TransformMatchingTex):
                 shape_map[key] = VGroup()
             shape_map[key].add(sm)
         return shape_map
+
+class TrueReplacementTransform(ReplacementTransform):
+    def begin(self) -> None:
+        # Use a copy of target_mobject for the align_data
+        # call so that the actual target_mobject stays
+        # preserved.
+        self.target_mobject = self.create_target()
+        self.target_copy = self.target_mobject
+        # Note, this potentially changes the structure
+        # of both mobject and target_mobject
+        self.mobject.align_data(self.target_copy)
+        self.starting_mobject = self.mobject
+        if self.suspend_mobject_updating:
+            # All calls to self.mobject's internal updaters
+            # during the animation, either from this Animation
+            # or from the surrounding scene, should do nothing.
+            # It is, however, okay and desirable to call
+            # the internal updaters of self.starting_mobject,
+            # or any others among self.get_all_mobjects()
+            self.mobject.suspend_updating()
+    def is_introducer(self):
+        return True
+
+class STFT(Succession):
+    def __init__(self, wave: Waveform, spec: Spectrogram, **kwargs):
+        boundary_rectangle = Rectangle(
+            color=wave['curve']['upper'].get_color(),
+            height=spec.height,
+            width=spec.width
+        )
+        boundary_rectangle.move_to(spec)
+        upper_lower = VDict({
+            'upper': wave['curve']['upper'],
+            'lower': wave['curve']['lower']
+        })
+        super().__init__(
+            AnimationGroup(
+                FadeOut(wave['curve']['area']),
+                Transform(upper_lower, boundary_rectangle),
+            ),
+            AnimationGroup(
+                FadeOut(upper_lower),
+                FadeIn(spec),
+            )
+        )
+
+    # def interpolate_mobject(self, alpha: float):
