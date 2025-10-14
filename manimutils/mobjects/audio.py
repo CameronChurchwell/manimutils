@@ -32,6 +32,9 @@ class Waveform(VDict):
         if normalize:
             audio = audio / abs(audio).max()
 
+
+        # axes_kwargs |= {'include_tip': False}
+
         self.axes_kwargs = axes_kwargs
         self.curve_kwargs = curve_kwargs
 
@@ -76,7 +79,6 @@ class Waveform(VDict):
         axes = Axes(
             x_range=[0, upper_contour.shape[-1]-1],
             y_range=[-1, 1, 0.25],
-            axis_config={'include_tip': False},
             x_axis_config={'include_ticks': False},
             **axes_kwargs
         )
@@ -117,10 +119,10 @@ class Waveform(VDict):
         self.sr = sr
 
     @classmethod
-    def from_wavfile(cls, file):
+    def from_wavfile(cls, file, **kwargs):
         sr, audio = scipy.io.wavfile.read(file)
         audio = audio.T # scipy -_-
-        return cls(audio, sr)
+        return cls(audio, sr, **kwargs)
 
     @override_animation(Write)
     def _write(self, **kwargs):

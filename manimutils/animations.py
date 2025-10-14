@@ -1,5 +1,6 @@
 from manim import *
 from manimutils.mobjects import *
+from typing import Callable, Sequence
 
 # TODO there has to be a better way to do this...
 class IndicationTransform(Transform):
@@ -122,3 +123,56 @@ class STFT(Succession):
         )
 
     # def interpolate_mobject(self, alpha: float):
+
+
+class WriteOutline(Write):
+
+    def interpolate_submobject(
+        self,
+        submobject: Mobject,
+        starting_submobject: Mobject,
+        outline,
+        alpha: float,
+    ) -> None:  # Fixme: not matching the parent class? What is outline doing here?
+        # index, subalpha = integer_interpolate(0, 2, alpha)
+        # if index == 0:
+        submobject.pointwise_become_partial(outline, 0, alpha)
+        submobject.match_style(outline)
+        # else:
+        #     submobject.interpolate(outline, starting_submobject, subalpha)
+
+
+class Draw(Animation):
+    """Draw the object"""
+
+    def __init__(
+        self,
+        vmobject: VMobject,
+        run_time: float = 2,
+        rate_func: Callable[[float], float] = double_smooth,
+        introducer: bool = True,
+        **kwargs,
+    ) -> None:
+        self._typecheck_input(vmobject)
+        super().__init__(
+            vmobject,
+            run_time=run_time,
+            introducer=introducer,
+            rate_func=rate_func,
+            **kwargs,
+        )
+
+    def _typecheck_input(self, vmobject: VMobject) -> None:
+        if not isinstance(vmobject, VMobject):
+            raise TypeError(
+                f"{self.__class__.__name__} only works for vectorized Mobjects"
+            )
+
+    def interpolate_submobject(
+        self,
+        submobject: Mobject,
+        starting_submobject: Mobject,
+        alpha: float,
+    ) -> None:  # Fixme: not matching the parent class? What is outline doing here?
+        submobject.pointwise_become_partial(self.mobject, 0, alpha)
+        submobject.match_style(self.mobject)

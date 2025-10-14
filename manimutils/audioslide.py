@@ -5,6 +5,9 @@ import manim
 from manim_slides import Slide
 from manim_slides.slide.animation import Wipe
 
+import scipy
+import scipy.io
+
 from tqdm import tqdm
 import shutil
 import platform
@@ -85,29 +88,39 @@ class AudioSlide(Slide):
             rev_file = scene_files_folder / f"{file.stem}_reversed{file.suffix}"
 
             # We only concat animations if it was not present
-            if not use_cache or not dst_file.exists():
+            if not use_cache or not dst_file.exists() or hasattr(pre_slide_config, 'audio_file'):
                 concatenate_video_files(slide_files, dst_file)
 
             if hasattr(pre_slide_config, 'audio_file'):
                 video = mpy.VideoFileClip(dst_file)
-                audio = mpy.AudioFileClip(pre_slide_config.audio_file)
-                if audio.duration > video.duration:
-                    freeze = video.to_ImageClip(t=video.duration-1/video.fps) # apparently, this needs an epsilon
-                    freeze = freeze.with_duration(audio.duration - video.duration).with_fps(video.fps)
-                    video = mpy.concatenate_videoclips([video, freeze])
-                else:
-                    padding = mpy.AudioClip(
-                        (lambda t: 0),
-                        duration=video.duration-audio.duration,
-                        fps=audio.fps
-                    )
-                    audio = mpy.concatenate_audioclips([audio, padding])
-                # breakpoint()
-                duration = max(video.duration, audio.duration)
-                video = video.with_duration(duration)
-                audio = audio.with_duration(duration)
+                sr, _audio = scipy.io.wavfile.read(pre_slide_config.audio_file)
+                sr = int(sr)
+                if len(_audio.shape) == 1:
+                    _audio = _audio[..., None]
+                    _audio = np.tile(_audio, (1, 2))
+                _audio = _audio.astype(np.float32) / abs(_audio).max()
+                audio = mpy.AudioArrayClip(_audio, fps=sr)
+                # if audio.duration > video.duration:
+                #     raise ValueError('weird')
+                #     freeze = video.to_ImageClip(t=video.duration-1/video.fps) # apparently, this needs an epsilon
+                #     freeze = freeze.with_duration(audio.duration - video.duration).with_fps(video.fps)
+                #     video = mpy.concatenate_videoclips([video, freeze])
+                # else:
+                #     padding = mpy.AudioClip(
+                #         (lambda t: np.array([0.0, 0.0])),
+                #         duration=video.duration-audio.duration,
+                #         fps=sr
+                #     )
+                #     audio = mpy.concatenate_audioclips([audio, padding])
+                bed = mpy.AudioClip(lambda t: np.array([0.0, 0.0]), duration=video.duration, fps=44100)
+                audio = mpy.CompositeAudioClip([bed, audio.with_start(0)]).with_duration(video.duration)
+
+                # duration = max(video.duration, audio.duration)
+                # video = video.with_duration(duration)
+                # audio = audio.with_duration(duration)
                 video: mpy.VideoFileClip = video.with_audio(audio)
-                video.write_videofile(dst_file, audio=True)
+                video.write_videofile(dst_file, fps=video.fps, audio=True, audio_fps=sr)
+                # video.write_videofile('test.mp4', fps=video.fps, audio=True, audio_fps=sr)
 
 
             # We only reverse video if it was not present

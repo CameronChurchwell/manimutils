@@ -38,10 +38,10 @@ def scale_to_fit(mobject, width, height):
     width_ratio = width / mobject.width
     height_ratio = height / mobject.height
     scale_factor = min(width_ratio, height_ratio)
-    mobject.scale(scale_factor)
+    return mobject.scale(scale_factor)
 
 def scale_to_fit_region(mobject, region: Rectangle):
-    scale_to_fit(mobject, region.width, region.height)
+    return scale_to_fit(mobject, region.width, region.height)
 
 tex_template = TexTemplate(preamble=tex_preamble)
 class CustomSlide(AudioSlide):
@@ -61,10 +61,12 @@ class CustomSlide(AudioSlide):
             return Transform(old_slide_number, new_slide_number, run_time=0.25)
         return Wait(stop_condition=lambda: True)
 
-    def transition(self, future):
+    def transition(self, future, return_anim=False):
         current = self.mobjects_without_canvas
         anim = Wipe(current, future, run_time=0.5)
         anim = AnimationGroup(anim, self.update_canvas())
+        if return_anim:
+            return anim
         self.play(anim)
 
     def play_sequence(self, iterator):
@@ -148,7 +150,12 @@ class CustomSlide(AudioSlide):
     def scale_to_fit(self, mobject, region=None):
         if region is None:
             region = self.content_region()
-        scale_to_fit_region(mobject, region)
+        return scale_to_fit_region(mobject, region)
+
+    def in_region(self, mobject, region=None):
+        if region is None:
+            region = self.content_region()
+        return self.scale_to_fit(mobject, region).move_to(region)
 
     def center(self, mobject, region=None):
         if region is None:
@@ -184,16 +191,24 @@ class CustomSlide(AudioSlide):
 
         return bullets
 
-    def bullet_slide(self, title, *bullets):
+    def bullet_slide(self, title, *bullets, auto_show_all=False):
         title = self.slide_title(title)
-        self.transition(title)
-        self.next_slide()
+        if not auto_show_all:
+            self.transition(title)
+            self.next_slide()
 
         bullets = self.bullets(*bullets)
+        self.scale_to_fit(bullets)
+        # bullets.move_to(self.content_region())
+        bullets.align_to(self.content_region(), UL)
 
-        for bullet in bullets.submobjects:
-            self.play(FadeIn(bullet))
+        if auto_show_all:
+            self.transition(VGroup(title, bullets))
             self.next_slide()
+        else:
+            for bullet in bullets.submobjects:
+                self.play(FadeIn(bullet))
+                self.next_slide()
 
     def image(self, image_path, image_region=None):
         assert Path(image_path).exists()
@@ -227,24 +242,28 @@ class CustomSlide(AudioSlide):
                 self.play(FadeIn(bullet))
             self.next_slide()
 
-    def title_slide(self, title, author):
-        self.play(Wait()); self.next_slide(auto_next=True)
+    def title_slide(self, title, author, animation=False, return_animation=False):
+        self.play(Wait()); self.next_slide(auto_next=animation)
         text = Text(title, font_size=86, color=ORANGE)
         text.scale_to_fit_width(manim.config['frame_width'])
         text.scale(0.8)
         subtext = Text(author, font_size=40)
         subtext.next_to(text, DOWN)
-        self.play(Succession(
+        anim = Succession(
             Write(text),
             Write(subtext),
-        ),)
-        self.next_slide(loop=True)
-        self.play(AnimationGroup(
-            ApplyWave(text, amplitude=0.02, run_time=2.),
-            ApplyWave(subtext, amplitude=0.02, run_time=2.),
-            Wait(1),
-            lag_ratio=0.2
-        ),)
+        )
+        if return_animation:
+            return anim
+        self.play(anim)
+        if animation:
+            self.next_slide(loop=True)
+            self.play(AnimationGroup(
+                ApplyWave(text, amplitude=0.02, run_time=2.),
+                ApplyWave(subtext, amplitude=0.02, run_time=2.),
+                Wait(1),
+                lag_ratio=0.2
+            ),)
         self.next_slide()
 
     def enable_slide_numbers(self):
@@ -253,7 +272,7 @@ class CustomSlide(AudioSlide):
         region = self.footer_region()
         self.scale_to_fit(slide_number, region)
         self.center(slide_number, region)
-        slide_number.align_to(region, LEFT)
+        slide_number.align_to(region, RIGHT)
         self.add(slide_number)
         self.add_to_canvas(slide_number=slide_number)
 

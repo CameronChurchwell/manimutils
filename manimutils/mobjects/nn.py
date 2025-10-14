@@ -12,7 +12,7 @@ class NeuralNetwork(VDict):
         for layer_size in layer_sizes:
             layer_neurons = VGroup()
             for i in range(0, layer_size):
-                layer_neurons.add(Circle(color=WHITE, stroke_width=2))
+                layer_neurons.add(Circle(stroke_width=2))
             layer_neurons.arrange(DOWN)
             neurons.add(layer_neurons)
         neurons.arrange(RIGHT, buff=layer_neurons[0].width)
