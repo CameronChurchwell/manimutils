@@ -163,8 +163,26 @@ class CustomSlide(AudioSlide):
         mobject.move_to(region)
 
     def bullets(self, *bullets, scale_factor=1, bullets_region=None):
-        indentation = []
         bullets = list(bullets)
+
+        if bullets_region is None:
+            bullets_region = self.content_region()
+
+        colors = {}
+        shapes = {}
+        i = 0
+        while i < len(bullets):
+            bullet = bullets[i]
+            if isinstance(bullet, ManimColor):
+                colors[i] = bullet
+                del bullets[i]
+            elif isinstance(bullet, VMobject):
+                shapes[i] = bullet
+                del bullets[i]
+            else:
+                i += 1
+
+        indentation = []
         for i in range(0, len(bullets)):
             indentation.append(0)
             while bullets[i].startswith('\t'):
@@ -174,8 +192,16 @@ class CustomSlide(AudioSlide):
 
         bullets = BulletedList(*bullets, buff=MED_SMALL_BUFF)
         bullets.scale(scale_factor)
-        if bullets_region is None:
-            bullets_region = self.content_region()
+
+        for i, shape in shapes.items():
+            dot = bullets[i][0]
+            shape = shape.copy().move_to(dot)
+            shape.scale(scale_factor)
+            bullets[i][0].become(shape)
+            bullets[i][0].next_to(bullets[i][1:], LEFT, SMALL_BUFF)
+
+        for i, color in colors.items():
+            bullets[i].set_color(color)
 
         bullets.align_to(bullets_region, LEFT)
         bullets.align_to(bullets_region, UP)
@@ -187,7 +213,6 @@ class CustomSlide(AudioSlide):
             if bullet.get_right()[0] > max_allowed:
                 breakpoint()
                 raise ValueError('bullet with content,', bullet, 'is too long')
-
 
         return bullets
 
