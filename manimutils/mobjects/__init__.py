@@ -4,3 +4,7 @@ from .grid import Grid
 from .nn import NeuralNetwork
 from .pandas_table import PandasTable
 from .tensorboard_table import TensorBoardTable
+from .stemplot import StemPlotAxes
+from .tex import BetterMathTex
+from .qr import QRMobject
+from .plot import BetterAxes
