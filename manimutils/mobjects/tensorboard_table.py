@@ -1,12 +1,12 @@
 import manimutils
 from manim import *
-from tensorflow.python.summary.summary_iterator import summary_iterator
 from typing import List, Optional
 from pathlib import Path
 import pandas as pd
 from .pandas_table import PandasTable
 
 def read_scalars(run_dir: Path, scalars: List[str]):
+    from tensorflow.python.summary.summary_iterator import summary_iterator
     data = []
     tags = set()
     for file in run_dir.rglob('events.out.tfevents.*'):

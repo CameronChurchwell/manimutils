@@ -8,3 +8,5 @@ from .stemplot import StemPlotAxes
 from .tex import BetterMathTex
 from .qr import QRMobject
 from .plot import BetterAxes
+from .multi_table import MultiTable
+from .bent_arrow import BentArrow

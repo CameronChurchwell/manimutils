@@ -291,6 +291,23 @@ class CustomSlide(AudioSlide):
             ),)
         self.next_slide()
 
+    def code(self, code_path, region=None):
+        assert Path(code_path).exists()
+        if region is None:
+            region = self.content_region()
+        code = Code(code_path, formatter_style='monokai', paragraph_config={'color': WHITE})
+        scale_to_fit_region(code, region)
+        code.move_to(region)
+        return code
+
+    def code_slide(self, title, code_path):
+        title = self.slide_title(title)
+        self.transition(title)
+        self.next_slide()
+        code = self.code(code_path)
+        self.play(FadeIn(code))
+        self.next_slide()
+
     def enable_slide_numbers(self):
         self.counter = 0
         slide_number = Text("0")
