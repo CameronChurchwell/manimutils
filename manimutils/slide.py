@@ -140,7 +140,7 @@ class CustomSlide(AudioSlide):
         self.next_slide()
 
     def slide_title(self, title, color=ORANGE):
-        text = Text(title, font_size=70, color=color)
+        text = Tex(title, color=color)
         region = self.title_region()
         scale_to_fit_region(text, region)
         text.move_to(region)
