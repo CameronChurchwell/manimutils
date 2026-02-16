@@ -57,7 +57,11 @@ class CustomSlide(AudioSlide):
         if hasattr(self, 'counter'):
             self.counter += 1
             old_slide_number = self.canvas["slide_number"]
-            new_slide_number = Text(f"{self.counter}").move_to(old_slide_number)
+            new_slide_number = MathTex(f"{self.slide_number_prefix}{self.counter}")
+            region = self.footer_region()
+            self.scale_to_fit(new_slide_number, region)
+            self.center(new_slide_number, region)
+            new_slide_number.align_to(region, RIGHT)
             return Transform(old_slide_number, new_slide_number, run_time=0.25)
         return Wait(stop_condition=lambda: True)
 
@@ -210,9 +214,9 @@ class CustomSlide(AudioSlide):
         for bullet, ind in zip(bullets.submobjects, indentation):
             for i in range(0, ind):
                 bullet.shift(RIGHT*scale_factor)
-            if bullet.get_right()[0] > max_allowed:
-                breakpoint()
-                raise ValueError('bullet with content,', bullet, 'is too long')
+            # if bullet.get_right()[0] > max_allowed:
+            #     breakpoint()
+            #     raise ValueError('bullet with content,', bullet, 'is too long')
 
         return bullets
 
@@ -269,7 +273,7 @@ class CustomSlide(AudioSlide):
 
     def title_slide(self, title, author, animation=False, return_animation=False):
         self.play(Wait()); self.next_slide(auto_next=animation)
-        text = Text(title, font_size=86, color=ORANGE)
+        text = MarkupText(title, font_size=86, color=ORANGE)
         text.scale_to_fit_width(manim.config['frame_width'])
         text.scale(0.8)
         subtext = Text(author, font_size=40)
@@ -308,9 +312,10 @@ class CustomSlide(AudioSlide):
         self.play(FadeIn(code))
         self.next_slide()
 
-    def enable_slide_numbers(self):
+    def enable_slide_numbers(self, prefix=''):
         self.counter = 0
-        slide_number = Text("0")
+        self.slide_number_prefix = prefix
+        slide_number = MathTex(prefix + "0")
         region = self.footer_region()
         self.scale_to_fit(slide_number, region)
         self.center(slide_number, region)
