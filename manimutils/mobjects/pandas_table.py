@@ -12,7 +12,7 @@ class PandasTable(MultiTable):
         ], axis=1)
         col_labels = np.where(mask, '', col_labels)
         super().__init__(
-            df.astype(str).to_numpy(),
+            df.fillna('').astype(str).to_numpy(),
             col_labels=col_labels,
             row_labels=[
                 Text(str(row)) for row in df.index.tolist()
