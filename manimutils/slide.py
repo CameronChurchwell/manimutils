@@ -66,6 +66,14 @@ class CustomSlide(AudioSlide):
         return Wait(stop_condition=lambda: True)
 
     def transition(self, future, return_anim=False):
+        # Guard against persistent ScreenRectangle in scene
+        # (if you don't do this, the transition gets messed up)
+        from itertools import chain
+        all_mobjects = list(chain.from_iterable(m.get_family() for m in self.mobjects_without_canvas))
+        for i in range(0, len(all_mobjects)):
+            if isinstance(all_mobjects[i], ScreenRectangle):
+                self.remove(all_mobjects[i])
+        # current = [m for m in self.mobjects_without_canvas if not isinstance(m, ScreenRectangle)]
         current = self.mobjects_without_canvas
         anim = Wipe(current, future, run_time=0.5)
         anim = AnimationGroup(anim, self.update_canvas())
@@ -219,6 +227,14 @@ class CustomSlide(AudioSlide):
             #     raise ValueError('bullet with content,', bullet, 'is too long')
 
         return bullets
+
+    def big_mobject_slide(self, mobject):
+        self.transition(self.in_region(mobject))
+        self.next_slide()
+
+    def big_tex_slide(self, string):
+        self.transition(self.in_region(Tex(string)))
+        self.next_slide()
 
     def bullet_slide(self, title, *bullets, auto_show_all=False):
         title = self.slide_title(title)

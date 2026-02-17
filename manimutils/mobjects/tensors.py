@@ -2,7 +2,7 @@ from manim import *
 import numpy as np
 from copy import deepcopy
 
-from manimutils.animations import *
+import manimutils.animations
 
 class Tensor2D(VGroup):
     def __init__(self, N, M, square_size, content=None, **kwargs):
@@ -194,7 +194,7 @@ class Tensor2D(VGroup):
                     ),
                     AnimationGroup(
                         *[
-                            IndicationTransform(sq, deepcopy(sq).fade(0), run_time=run_time) for sq in new_chunk_squares
+                            manimutils.animations.IndicationTransform(sq, deepcopy(sq).fade(0), run_time=run_time) for sq in new_chunk_squares
                         ],
                         lag_ratio=fade_in_lag_ratio
                     )
@@ -234,7 +234,7 @@ class Tensor2D(VGroup):
             ),
             AnimationGroup(
                 *[
-                    IndicationTransform(sq, deepcopy(sq).fade(0), run_time=run_time) for sq in new_chunk_squares
+                    manimutils.animations.IndicationTransform(sq, deepcopy(sq).fade(0), run_time=run_time) for sq in new_chunk_squares
                 ],
                 lag_ratio=fade_in_lag_ratio
             )
@@ -288,7 +288,7 @@ class Tensor2D(VGroup):
             new_text.align_to(text, UP)
             yield AnimationGroup(
                 Indicate(self.squares.flatten()[idx]),
-                TransformMatchingTexInOrder(
+                Transform(
                     text,
                     new_text,
                     run_time=0.5,
@@ -298,7 +298,7 @@ class Tensor2D(VGroup):
                 )
             )
             text = new_text
-        yield TransformMatchingTexInOrder(
+        yield Transform(
             text,
             original_text,
             run_time=0.5,

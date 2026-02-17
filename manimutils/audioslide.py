@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from manim import *
@@ -40,7 +41,7 @@ class AudioSlide(Slide):
         """
         self._add_last_slide()
 
-        files_folder = self._output_folder / "files"
+        files_folder: Path = self._output_folder / "files"
 
         scene_name = str(self)
         scene_files_folder = files_folder / scene_name
@@ -100,27 +101,13 @@ class AudioSlide(Slide):
                     _audio = np.tile(_audio, (1, 2))
                 _audio = _audio.astype(np.float32) / abs(_audio).max()
                 audio = mpy.AudioArrayClip(_audio, fps=sr)
-                # if audio.duration > video.duration:
-                #     raise ValueError('weird')
-                #     freeze = video.to_ImageClip(t=video.duration-1/video.fps) # apparently, this needs an epsilon
-                #     freeze = freeze.with_duration(audio.duration - video.duration).with_fps(video.fps)
-                #     video = mpy.concatenate_videoclips([video, freeze])
-                # else:
-                #     padding = mpy.AudioClip(
-                #         (lambda t: np.array([0.0, 0.0])),
-                #         duration=video.duration-audio.duration,
-                #         fps=sr
-                #     )
-                #     audio = mpy.concatenate_audioclips([audio, padding])
                 bed = mpy.AudioClip(lambda t: np.array([0.0, 0.0]), duration=video.duration, fps=44100)
                 audio = mpy.CompositeAudioClip([bed, audio.with_start(0)]).with_duration(video.duration)
 
-                # duration = max(video.duration, audio.duration)
-                # video = video.with_duration(duration)
-                # audio = audio.with_duration(duration)
                 video: mpy.VideoFileClip = video.with_audio(audio)
-                video.write_videofile(dst_file, fps=video.fps, audio=True, audio_fps=sr)
-                # video.write_videofile('test.mp4', fps=video.fps, audio=True, audio_fps=sr)
+                video.write_videofile(dst_file.with_suffix('.tmp.mp4'), fps=video.fps, audio=True, audio_fps=sr)
+
+                os.replace(dst_file.with_suffix('.tmp.mp4'), dst_file)
 
 
             # We only reverse video if it was not present

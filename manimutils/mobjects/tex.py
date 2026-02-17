@@ -1,4 +1,5 @@
 from manim import *
+import numpy as np
 
 class BetterSingleStringMathTex(SingleStringMathTex):
     pass
@@ -13,12 +14,33 @@ class BetterMathTex(MathTex):
         """
         new_submobjects = []
         curr_index = 0
-        for tex_string in self.tex_strings:
+        bracket_submobs = -1
+        for i, tex_string in enumerate(self.tex_strings):
             if tex_string == r'\begin{cases}':
                 num_submobs = 1
                 sub_tex_mob = SingleStringMathTex('')
+            if tex_string.strip() in [r'\\', r'&']: # ignore white spaces
+                # TODO is this the best way to handle this?
+                continue
             elif tex_string == r'\end{cases}':
                 continue
+            elif tex_string == r'\left[':
+                close_index = self.tex_strings.index(r'\right]', i)
+                with_brackets = SingleStringMathTex(''.join(self.tex_strings[i:close_index+1]))
+                without_brackets = SingleStringMathTex(''.join(self.tex_strings[i+1:close_index]))
+                assert (len(with_brackets.submobjects) - len(without_brackets.submobjects)) % 2 == 0, (len(with_brackets.submobjects) - len(without_brackets.submobjects))
+                num_submobs = (len(with_brackets.submobjects) - len(without_brackets.submobjects)) // 2
+                sub_tex_mob = SingleStringMathTex('')
+                bracket_submobs = num_submobs
+            elif tex_string == r'\right]':
+                num_submobs = bracket_submobs
+                sub_tex_mob = SingleStringMathTex('')
+            elif tex_string == r'\begin{matrix}':
+                num_submobs = 0
+                sub_tex_mob = SingleStringMathTex('')
+            elif tex_string == r'\end{matrix}':
+                num_submobs = 0
+                sub_tex_mob = SingleStringMathTex('')
             else:
                 sub_tex_mob = SingleStringMathTex(
                     tex_string,
@@ -38,3 +60,16 @@ class BetterMathTex(MathTex):
             curr_index = new_index
         self.submobjects = new_submobjects
         return self
+
+    @staticmethod
+    def matrix_to_tex_strings(matrix: np.ndarray):
+        assert len(matrix.shape) == 2
+        tex_strings = [r'\left[', r'\begin{matrix}']
+        for row in matrix:
+            for entry in row:
+                tex_strings.append(str(entry))
+                tex_strings.append(' & ')
+            tex_strings[-1] = r' \\ '
+        tex_strings[-1] = r'\end{matrix}'
+        tex_strings.append(r'\right]')
+        return tex_strings

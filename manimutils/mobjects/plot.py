@@ -29,6 +29,11 @@ class BetterAxes(Axes):
             **kwargs
         )
 
+    def add_title(self, title: Tex):
+        title = title.next_to(self, UP)
+        self.add(title)
+        self.title = title
+
     def _create_bar(self, x_value, y_value, width=0.5, double_sided=False):
         bottom_edge_center = self.c2p(x_value, 0)
         width_in_screen_space = self.c2p(width, 0)[0] - self.c2p(0, 0)[0]
@@ -55,6 +60,7 @@ class BetterAxes(Axes):
             bars.add(bar)
 
         return bars
+    
 
     def stem_plot(
         self,
@@ -84,3 +90,53 @@ class BetterAxes(Axes):
 
             dots.add(dot_and_stem)
         return dots
+    
+    def pcolormesh(
+        self,
+        matrix,
+        low_color: ParsableManimColor = WHITE,
+        high_color: ParsableManimColor = ManimColor('#000082'),
+        plot_kwargs={}
+    ):
+        from matplotlib import pyplot as plt
+        from matplotlib.colors import LinearSegmentedColormap
+        from matplotlib.backends.backend_agg import FigureCanvasAgg
+
+        cmap = LinearSegmentedColormap.from_list(
+            'WhBu',
+            [
+                low_color.to_rgba(),
+                high_color.to_rgba()
+            ],
+            N=256,
+            gamma=1.0
+        )
+
+        plain_x_axis = self.x_axis.copy()
+        plain_x_axis.submobjects = []
+
+        fig, ax = plt.subplots()
+        fig.set_size_inches(self.x_axis.get_length(), self.y_axis.get_length())
+        ax.set_axis_off()
+
+        fig.patch.set_alpha(0)       # Transparent figure background
+        ax.set_facecolor('none')     # Transparent axes background
+        ax.pcolormesh(matrix, cmap=cmap, **plot_kwargs)
+        fig.tight_layout(pad=0)
+        canvas = FigureCanvasAgg(fig)
+        canvas.draw()
+        width, height = canvas.get_width_height()
+        argb = np.frombuffer(canvas.tostring_argb(), dtype=np.uint8).reshape((height, width, 4))
+        rgba = argb[:, :, [1, 2, 3, 0]]
+        plt.close(fig)
+
+        img = ImageMobject(rgba)
+
+        
+
+        img.scale_to_fit_width(plain_x_axis.get_length())
+        img.move_to(plain_x_axis, aligned_edge=DOWN)
+
+        img.set_z_index(self.z_index-1)
+
+        return img

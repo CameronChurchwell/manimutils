@@ -10,3 +10,5 @@ from .qr import QRMobject
 from .plot import BetterAxes
 from .multi_table import MultiTable
 from .bent_arrow import BentArrow
+from .varray import VArray
+from .diagram import Diagram

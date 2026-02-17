@@ -2,6 +2,7 @@ from manim import *
 from manimutils.mobjects import *
 from typing import Callable, Sequence
 
+
 # TODO there has to be a better way to do this...
 class IndicationTransform(Transform):
 
@@ -10,6 +11,7 @@ class IndicationTransform(Transform):
         mobject: Mobject | None,
         target_mobject: Mobject | None = None,
         scale_factor: float = 1.1,
+        color: ParsableManimColor = ORANGE,
         path_func = None,
         path_arc: float = 0,
         path_arc_axis: np.ndarray = OUT,
@@ -27,7 +29,54 @@ class IndicationTransform(Transform):
             replace_mobject_with_target_in_scene,
             **kwargs
         )
-        self.indication_copy = mobject.copy().scale(scale_factor)
+        self.indication_copy = mobject.copy().scale(scale_factor).set_color(color)
+
+    def interpolate_mobject(self, alpha: float) -> None:
+        """Interpolates the mobject of the :class:`Animation` based on alpha value.
+
+        Parameters
+        ----------
+        alpha
+            A float between 0 and 1 expressing the ratio to which the animation
+            is completed. For example, alpha-values of 0, 0.5, and 1 correspond
+            to the animation being completed 0%, 50%, and 100%, respectively.
+        """
+        tc = self.target_copy
+        s = self.starting_mobject
+        if alpha < 0.5:
+            self.starting_mobject = s
+            self.target_copy = self.indication_copy
+            alpha = alpha * 2
+        else:
+            self.starting_mobject = self.indication_copy
+            self.target_copy = tc
+            alpha = (alpha - 0.5) * 2
+        retval = super().interpolate_mobject(alpha)
+        self.target_copy = tc
+        self.starting_mobject = s
+        return retval
+
+class CIndicate(IndicationTransform):
+
+    def __init__(
+        self,
+        mobject: Mobject | None,
+        scale_factor: float = 1.1,
+        color: ParsableManimColor = ORANGE,
+        **kwargs,
+    ) -> None:
+        super().__init__(
+            mobject,
+            mobject.copy().set_color(color),
+            replace_mobject_with_target_in_scene=False,
+            scale_factor=scale_factor,
+            color=color,
+            **kwargs
+        )
+
+    def begin(self):
+        self._setup_scene
+        return super().begin()
 
     def interpolate_mobject(self, alpha: float) -> None:
         """Interpolates the mobject of the :class:`Animation` based on alpha value.

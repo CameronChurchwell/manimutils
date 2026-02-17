@@ -17,6 +17,8 @@ class BentArrow(Arrow):
         tip_shape = kwargs.pop("tip_shape", ArrowTriangleFilledTip)
         super(Arrow, self).__init__(*list(args)[-2:], buff=buff, stroke_width=stroke_width, **kwargs)  # type: ignore[misc]
 
+        args = [a.get_center() if isinstance(a, Mobject) else a for a in args]
+
         args = np.array(args).round(6)
         self.set_points_as_corners(args)
         self._account_for_buff(buff)
