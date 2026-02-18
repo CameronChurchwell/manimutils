@@ -19,7 +19,7 @@ class BetterMathTex(MathTex):
             if tex_string == r'\begin{cases}':
                 num_submobs = 1
                 sub_tex_mob = SingleStringMathTex('')
-            if tex_string.strip() in [r'\\', r'&']: # ignore white spaces
+            elif tex_string.strip() in [r'\\', r'&']: # ignore white spaces
                 # TODO is this the best way to handle this?
                 continue
             elif tex_string == r'\end{cases}':

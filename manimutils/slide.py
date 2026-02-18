@@ -336,7 +336,7 @@ class CustomSlide(AudioSlide):
         self.scale_to_fit(slide_number, region)
         self.center(slide_number, region)
         slide_number.align_to(region, RIGHT)
-        self.add(slide_number)
+        self.play(Write(slide_number))
         self.add_to_canvas(slide_number=slide_number)
 
     # def play_audio(self, audio_file):

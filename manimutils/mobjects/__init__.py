@@ -12,3 +12,4 @@ from .multi_table import MultiTable
 from .bent_arrow import BentArrow
 from .varray import VArray
 from .diagram import Diagram
+from .audio_visualize import AudioVisualizer
