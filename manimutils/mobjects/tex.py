@@ -73,3 +73,9 @@ class BetterMathTex(MathTex):
         tex_strings[-1] = r'\end{matrix}'
         tex_strings.append(r'\right]')
         return tex_strings
+
+
+class Footnote(Tex): # Is this scuffed? eh...
+    
+    def __init__(self, tex_string, arg_separator="", tex_environment="center", **kwargs):
+        super().__init__(r'\mbox{' + tex_string + '}', arg_separator=arg_separator, tex_environment=tex_environment, **kwargs)

@@ -5,7 +5,7 @@ from .nn import NeuralNetwork
 from .pandas_table import PandasTable
 from .tensorboard_table import TensorBoardTable
 from .stemplot import StemPlotAxes
-from .tex import BetterMathTex
+from .tex import BetterMathTex, Footnote
 from .qr import QRMobject
 from .plot import BetterAxes
 from .multi_table import MultiTable

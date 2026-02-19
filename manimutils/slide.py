@@ -5,6 +5,7 @@ import manim
 from manim_slides import Slide
 from manim_slides.slide.animation import Wipe
 from manimutils import AudioSlide
+from .mobjects.tex import Footnote
 
 
 tex_preamble = r"""
@@ -58,7 +59,7 @@ class CustomSlide(AudioSlide):
             self.counter += 1
             old_slide_number = self.canvas["slide_number"]
             new_slide_number = MathTex(f"{self.slide_number_prefix}{self.counter}")
-            region = self.footer_region()
+            region = self.footer_region(height_ratio=0.05)
             self.scale_to_fit(new_slide_number, region)
             self.center(new_slide_number, region)
             new_slide_number.align_to(region, RIGHT)
@@ -94,13 +95,22 @@ class CustomSlide(AudioSlide):
         region.to_edge(UP)
         return region
 
-    def footer_region(self, height_ratio=0.05, side_buffer=None):
+    def footer_region(self, height_ratio=0.075, side_buffer=None, account_for_number=False):
         if side_buffer is None:
             side_buffer = DEFAULT_MOBJECT_TO_EDGE_BUFFER
         width = manim.config['frame_width'] - 2*side_buffer
+
         height = manim.config['frame_height'] * height_ratio
         region = Rectangle(height=height, width=width)
-        region.to_edge(DOWN)
+        region.to_edge(DOWN, MED_SMALL_BUFF)
+
+        if account_for_number and 'slide_number' in self.canvas:
+            number = self.canvas['slide_number']
+            right_bound = number.get_left() + DEFAULT_MOBJECT_TO_MOBJECT_BUFFER * LEFT
+            new_width = abs((region.get_left() - right_bound)[0])
+            new_region = region.copy().stretch_to_fit_width(new_width).align_to(region, LEFT)
+            region = new_region
+
         return region
 
     def content_region(self, side_buffer=None, top_buffer=None, bottom_buffer=None):
@@ -182,12 +192,23 @@ class CustomSlide(AudioSlide):
 
         colors = {}
         shapes = {}
+        footnotes = []
+        footnote_map = {}
         i = 0
         while i < len(bullets):
             bullet = bullets[i]
             if isinstance(bullet, ManimColor):
                 colors[i] = bullet
                 del bullets[i]
+            elif isinstance(bullet, Footnote):
+                num = len(footnotes)+1
+                mark_tex = r'\textsuperscript{' + str(num) + '}'
+                bullet = Footnote(mark_tex + bullet.tex_string)
+                footnotes.append(bullet)
+                del bullets[i]
+                assert i > 0, 'First object cannot be a footnote (that doesn\'t even make sense!)'
+                bullets[i-1] = bullets[i-1] + mark_tex
+                footnote_map[i-1] = bullet
             elif isinstance(bullet, VMobject):
                 shapes[i] = bullet
                 del bullets[i]
@@ -204,6 +225,9 @@ class CustomSlide(AudioSlide):
 
         bullets = BulletedList(*bullets, buff=MED_SMALL_BUFF)
         bullets.scale(scale_factor)
+
+        for i, footnote in footnote_map.items():
+            bullets[i].footnote = footnote
 
         for i, shape in shapes.items():
             dot = bullets[i][0]
@@ -226,7 +250,19 @@ class CustomSlide(AudioSlide):
             #     breakpoint()
             #     raise ValueError('bullet with content,', bullet, 'is too long')
 
+        if len(footnotes) > 0:
+            return bullets, self.footnotes(footnotes)
+
         return bullets
+
+    def footnotes(self, footnotes):
+        region = self.footer_region(account_for_number=True)
+        if not isinstance(footnotes, VGroup):
+            footnotes = VGroup(footnotes)
+            footnotes.arrange(DOWN, SMALL_BUFF, aligned_edge=LEFT)
+        self.scale_to_fit(footnotes, region)
+        footnotes.move_to(region, aligned_edge=LEFT)
+        return footnotes
 
     def big_mobject_slide(self, mobject):
         self.transition(self.in_region(mobject))
@@ -243,16 +279,25 @@ class CustomSlide(AudioSlide):
             self.next_slide()
 
         bullets = self.bullets(*bullets)
+        footnotes = None
+        if isinstance(bullets, tuple):
+            bullets, footnotes = bullets
         self.scale_to_fit(bullets)
         # bullets.move_to(self.content_region())
         bullets.align_to(self.content_region(), UL)
 
         if auto_show_all:
-            self.transition(VGroup(title, bullets))
+            if footnotes is not None:
+                self.transition(VGroup(title, bullets, footnotes))
+            else:
+                self.transition(VGroup(title, bullets))
             self.next_slide()
         else:
             for bullet in bullets.submobjects:
-                self.play(FadeIn(bullet))
+                if hasattr(bullet, 'footnote'):
+                    self.play(FadeIn(bullet, bullet.footnote))
+                else:
+                    self.play(FadeIn(bullet))
                 self.next_slide()
 
     def image(self, image_path, image_region=None):
@@ -264,12 +309,16 @@ class CustomSlide(AudioSlide):
         image.move_to(image_region)
         return image
 
-    def image_slide(self, title, image_path):
+    def image_slide(self, title, image_path, credit=None):
         title = self.slide_title(title)
         self.transition(title)
         self.next_slide()
         image = self.image(image_path)
-        self.play(FadeIn(image))
+        if credit is not None:
+            footnotes = self.footnotes([Footnote(credit)])
+            self.play(FadeIn(Group(image, footnotes)))
+        else:
+            self.play(FadeIn(image))
         self.next_slide()
 
     def bullet_image_slide(self, title, *bullets, image_path, image_bullet_index=0):
@@ -332,7 +381,7 @@ class CustomSlide(AudioSlide):
         self.counter = 0
         self.slide_number_prefix = prefix
         slide_number = MathTex(prefix + "0")
-        region = self.footer_region()
+        region = self.footer_region(height_ratio=0.05)
         self.scale_to_fit(slide_number, region)
         self.center(slide_number, region)
         slide_number.align_to(region, RIGHT)
