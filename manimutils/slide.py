@@ -360,11 +360,14 @@ class CustomSlide(AudioSlide):
             ),)
         self.next_slide()
 
-    def code(self, code_path, region=None):
-        assert Path(code_path).exists()
+    def code(self, code_path=None, code_string=None, region=None):
+        if code_path is not None:
+            assert Path(code_path).exists()
+        else:
+            assert isinstance(code_string, str)
         if region is None:
             region = self.content_region()
-        code = Code(code_path, formatter_style='monokai', paragraph_config={'color': WHITE})
+        code = Code(code_file=code_path, code_string=code_string, formatter_style='monokai', paragraph_config={'color': WHITE})
         scale_to_fit_region(code, region)
         code.move_to(region)
         return code

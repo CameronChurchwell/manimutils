@@ -3,7 +3,7 @@ from pathlib import Path
 
 from manim import *
 import manim
-from manim_slides import Slide
+from manim_slides.slide import Slide
 from manim_slides.slide.animation import Wipe
 
 import scipy
@@ -82,6 +82,7 @@ class AudioSlide(Slide):
             try:
                 file = merge_basenames(slide_files)
             except ValueError as e:
+                breakpoint()
                 raise ValueError(
                     f"Failed to merge basenames of files for slide: {pre_slide_config!r}"
                 ) from e

@@ -16,6 +16,14 @@ setup(
         'manim', # 0.19.0
         'manim-slides', # 5.4.2
         'numpy',
+        'torch',
+        'matplotlib',
+        'pandas',
+        'matplotlib',
+        'scipy',
+        'librosa',
+        'soundfile',
+        'tqdm',
     ],
     packages=find_packages(),
     long_description=long_description,

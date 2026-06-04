@@ -6,7 +6,6 @@ import scipy.io.wavfile
 import scipy.signal
 import scipy.fft
 import scipy.ndimage
-import torch
 
 from matplotlib import pyplot as plt
 from matplotlib.colors import PowerNorm, LinearSegmentedColormap
@@ -21,6 +20,7 @@ class Waveform(VDict):
     def __init__(self, audio, sr, normalize=True, frame_size=None, hop_size=None, axes_kwargs={}, curve_kwargs={}):
         """Takes `audio` in `CxT` or `T` format""" \
         """and sample rate `sr` and constructs a Waveform mobject"""
+        import torch
         if frame_size is None:
             frame_size = sr // 200 # 5ms
         if hop_size is None:
@@ -309,6 +309,7 @@ class Spectrogram(ImageMobject):
 
     def __init__(self, time, freq, spec, aspect_ratio=4/3, powernorm=0.5, low_color=WHITE, high_color=ManimColor.from_rgb((0., 0.15, 0.4)), scale_y=True):
         """Takes a spectrogram in FxT format"""
+        import torch
         if isinstance(spec, torch.Tensor):
             spec = spec.cpu().detach().numpy()
         self.spec = spec
@@ -396,6 +397,7 @@ class Spectrogram(ImageMobject):
         low_color=WHITE,
         high_color=ManimColor.from_rgb((0., 0.15, 0.4))
     ):
+        import torch
         if isinstance(audio, torch.Tensor):
             audio = audio.cpu().detach().numpy()
         if len(audio.shape) == 2:

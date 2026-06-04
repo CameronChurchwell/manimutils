@@ -7,7 +7,7 @@ class BentArrow(Arrow):
         self,
         *args: Any,
         stroke_width: float = 4,
-        buff: float = SMALL_BUFF*0.5,
+        buff: float = SMALL_BUFF,
         max_tip_length_to_length_ratio: float = 0.25,
         max_stroke_width_to_length_ratio: float = 5,
         **kwargs: Any,
