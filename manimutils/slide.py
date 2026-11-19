@@ -222,8 +222,14 @@ class CustomSlide(AudioSlide):
                 bullets[i] = bullets[i][1:]
                 indentation[i] += 1
             bullets[i] = bullets[i].replace('\n', '\\\\')
+            # BulletedList centers each dot on the line's first glyph, so lines starting with `` or ... get a
+            # misplaced dot. Start every line with the same zero-width x to anchor on instead (removed below).
+            # \leavevmode stops the first line's \rlap from landing on its own line
+            bullets[i] = r'\leavevmode\rlap{x}' + bullets[i]
 
         bullets = BulletedList(*bullets, buff=MED_SMALL_BUFF)
+        for bullet in bullets:
+            bullet.remove(bullet[1]) # the anchor x (bullet[0] is the dot)
         bullets.scale(scale_factor)
 
         for i, footnote in footnote_map.items():
